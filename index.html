@@ -98,9 +98,10 @@
   <div class="row"><button class="btn primary" id="pour">Pour fresh sand</button><button class="btn" id="sound">Sound on</button><button class="btn" id="haptics">Haptics on</button></div>
 </div>
 <div id="toast"></div>
+<script type="module" src="src/app.js"></script>
 <script type="module" src="src/main.js"></script>
 <script>
-  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+  if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.Capacitor) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
 </html>

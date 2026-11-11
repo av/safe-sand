@@ -1,0 +1,18 @@
+{
+  "name": "safe-sand",
+  "private": true,
+  "scripts": {
+    "www": "rm -rf www && mkdir www && cp -r index.html manifest.webmanifest privacy.html icons src www/",
+    "sync": "npm run www && cap sync android"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "~8.2.0"
+  },
+  "dependencies": {
+    "@capacitor-community/admob": "^8.3.0",
+    "@capacitor/android": "~8.2.0",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "~8.2.0",
+    "@capgo/native-purchases": "^8.9.9"
+  }
+}
