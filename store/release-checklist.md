@@ -16,6 +16,8 @@ The account was still blocked at **Create app** on 11 November 2026. Identity do
 
 The Android app currently uses Google's test AdMob app and ad-unit IDs. They are suitable for testing, and must be replaced before a public release.
 
+On 11 November 2026, reactivation of the existing AdMob account stopped with “This product is no longer available in your account's country or territory.” Resolve the existing account's country/closure status with Google before registering a replacement. Google permits only one AdMob account per publisher: [account issues FAQ](https://support.google.com/admob/answer/9686306?hl=en-GB).
+
 - Create/link the Android app and its banner and rewarded ad units in AdMob.
 - Replace `admobAppId` in `android/gradle.properties` and both `UNITS` in `src/app.js`.
 - Configure and publish the required consent messages in AdMob Privacy & messaging.
@@ -31,7 +33,7 @@ The Android app currently uses Google's test AdMob app and ad-unit IDs. They are
 - Upload the icon, feature graphic and phone screenshots from this folder.
 - Enter the descriptions and developer support contact.
 - Complete ads, app access, target audience, content rating, Data safety and the remaining Play declarations based on the final build. The answers in `listing.md` are a draft, not submitted declarations.
-- Confirm whether this launch keeps the ads/Sand Pro model. Removing it requires updating both code and disclosures.
+- Keep the website fully free and ad-free. The Android launch retains advertising and the existing optional Sand Pro implementation. Confirm the final Pro price before activating the product.
 
 ## Build and test
 
