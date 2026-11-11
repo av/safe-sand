@@ -2,7 +2,7 @@
 
 Real-feeling sand on your phone screen. Tilt the phone and it slides, jerk it and it lags behind, drag a finger and it plows a channel, flip the phone face-down and it falls off.
 
-Open it on a phone: **https://av.github.io/safe-sand/**. For true fullscreen, use Share → Add to Home Screen (iOS) or Install app (Android). On iOS, tap "Pour" and allow motion access. Rotating the phone does not move the sand: the picture stays fixed to the glass, the way real sand would. The silent switch mutes the sound on iPhone, and the sound mixes with any music already playing.
+Open it on a phone: **https://av.github.io/safe-sand/**. For true fullscreen, use Share → Add to Home Screen (iOS) or Install app (Android). Before the first pour, pick the sand type and what lies under it on the start card. On iOS, tap "Pour" and allow motion access. Rotating the phone does not move the sand: the picture stays fixed to the glass, the way real sand would. The silent switch mutes the sound on iPhone, and the sound mixes with any music already playing.
 
 ## How it works
 
