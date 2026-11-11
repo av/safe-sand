@@ -416,7 +416,7 @@ function start() {
   started = true;
   const motion = input.requestMotion();
   if (soundOn) audio.start();
-  if (ANDROID && !IOS && coarse && !standalone && document.documentElement.requestFullscreen) {
+  if (ANDROID && !IOS && coarse && !standalone && !window.Capacitor && document.documentElement.requestFullscreen) {
     document.documentElement.requestFullscreen({ navigationUI: 'hide' })
       .then(() => screen.orientation?.lock?.(screen.orientation.type))
       .catch(() => {});
@@ -443,31 +443,39 @@ function toast(msg) {
 }
 
 function buildMenu() {
-  const sands = $('sands');
-  for (const k of PRESET_ORDER) {
-    const b = document.createElement('button');
-    b.className = 'swatch' + (k === presetKey ? ' on' : '');
-    b.style.setProperty('--c', PRESETS[k].swatch);
-    b.innerHTML = `<i></i><span>${PRESETS[k].name}</span>`;
-    b.onclick = () => {
-      presetKey = k; store.set('preset', k);
-      [...sands.children].forEach((c) => c.classList.toggle('on', c === b));
-      resetWorld(true); closeMenu();
-    };
-    sands.appendChild(b);
+  const sandEls = [$('sands'), $('introSands')];
+  const screenEls = [$('screens'), $('introScreens')];
+  const sync = () => {
+    sandEls.forEach((el) => [...el.children].forEach((c) => c.classList.toggle('on', c.dataset.k === presetKey)));
+    screenEls.forEach((el) => [...el.children].forEach((c) => c.classList.toggle('on', c.dataset.k === screenKey)));
+  };
+  for (const el of sandEls) {
+    for (const k of PRESET_ORDER) {
+      const b = document.createElement('button');
+      b.className = 'swatch';
+      b.dataset.k = k;
+      b.dataset.sand = k;
+      b.style.setProperty('--c', PRESETS[k].swatch);
+      b.innerHTML = `<i></i><span>${PRESETS[k].name}</span>`;
+      b.onclick = () => {
+        presetKey = k; store.set('preset', k); sync();
+        if (started) { resetWorld(true); closeMenu(); }
+      };
+      el.appendChild(b);
+    }
   }
-  const screens = $('screens');
-  for (const k of SCREEN_ORDER) {
-    const b = document.createElement('button');
-    b.className = 'chip' + (k === screenKey ? ' on' : '');
-    b.textContent = SCREENS[k].name;
-    b.onclick = () => {
-      screenKey = k; store.set('screen', k);
-      [...screens.children].forEach((c) => c.classList.toggle('on', c === b));
-      refreshScreen();
-    };
-    screens.appendChild(b);
+  for (const el of screenEls) {
+    for (const k of SCREEN_ORDER) {
+      const b = document.createElement('button');
+      b.className = 'chip';
+      b.dataset.k = k;
+      b.textContent = SCREENS[k].name;
+      b.onclick = () => { screenKey = k; store.set('screen', k); sync(); refreshScreen(); };
+      el.appendChild(b);
+    }
   }
+  sync();
+  $('picker').addEventListener('click', (e) => e.stopPropagation());
   const amount = $('amount');
   const wrap = document.createElement('div');
   wrap.style.cssText = 'display:flex;align-items:center;gap:8px;';

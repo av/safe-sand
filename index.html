@@ -52,12 +52,20 @@
   #intro { position: fixed; inset: 0; display: grid; place-items: center; z-index: 5; cursor: pointer; transition: opacity .6s ease, visibility 0s linear 0s; --ink: #24211e; --sub: rgba(36,33,30,.58); --btn: #24211e; --btnInk: #f6f2ea; }
   .darkscreen #intro { --ink: #f4f1ec; --sub: rgba(244,241,236,.6); --btn: #f4f1ec; --btnInk: #1c1a18; }
   #intro.hide { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .2s ease, visibility 0s linear .2s; }
-  .card { text-align: center; color: var(--ink); padding: 32px; max-width: 300px; animation: rise .9s cubic-bezier(.2,.8,.2,1) both; }
+  .card { text-align: center; color: var(--ink); padding: 32px; max-width: 300px; border-radius: 32px; background: color-mix(in srgb, var(--btnInk) 62%, transparent); -webkit-backdrop-filter: blur(22px); backdrop-filter: blur(22px); animation: rise .9s cubic-bezier(.2,.8,.2,1) both; }
   .card h1 { margin: 0; font-weight: 300; font-size: 44px; letter-spacing: .32em; text-indent: .32em; text-transform: uppercase; }
   .card h2 { margin: 14px 0 0; font-size: 19px; font-weight: 500; }
-  .card p { margin: 14px 0 30px; color: var(--sub); font-size: 15px; letter-spacing: .01em; }
+  .card p { margin: 14px 0 22px; color: var(--sub); font-size: 15px; letter-spacing: .01em; }
   .cta { display: inline-flex; align-items: center; justify-content: center; min-width: 132px; padding: 14px 30px; border-radius: 999px; background: var(--btn); color: var(--btnInk); font-weight: 600; font-size: 15px; letter-spacing: .04em; box-shadow: 0 10px 30px rgba(20,18,16,.18); transition: transform .15s ease; }
   #intro:active .cta { transform: scale(.97); }
+  #picker { margin: 0 -14px 26px; cursor: default; }
+  #picker .row { justify-content: center; margin-bottom: 14px; }
+  #picker .row:last-child { margin-bottom: 0; }
+  #picker .swatch { flex: 0 1 52px; min-width: 0; color: var(--ink); font-size: 10.5px; }
+  #picker .swatch i { width: 30px; height: 30px; }
+  #picker .swatch.on i { outline-color: var(--ink); }
+  #picker .chip { padding: 7px 12px; font-size: 12.5px; color: var(--ink); background: color-mix(in srgb, var(--ink) 10%, transparent); }
+  #picker .chip.on { background: var(--ink); color: var(--btnInk); }
   .hint { margin-top: 26px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--sub); }
   @keyframes rise { from { opacity: 0; transform: translateY(10px); } }
   #menuBtn { position: fixed; right: max(6px, env(safe-area-inset-right)); top: max(6px, env(safe-area-inset-top)); width: 44px; height: 44px; border: 0; background: none; z-index: 4; display: grid; place-items: center; padding: 0; opacity: 0; pointer-events: none; transition: opacity .5s ease; }
@@ -87,7 +95,7 @@
 </head>
 <body>
 <canvas id="c"></canvas>
-<div id="intro"><div class="card"><h1>Sand</h1><h2>Hyper-realistic sand simulator</h2><p>Built with WebGL2 and JavaScript. Push grains with your finger, tilt your phone to make them slide, or shake to scatter them. Play in your browser on phones, tablets and desktops.</p><span class="cta">Pour</span><div class="hint">Lay it flat · Tilt · Shake · Draw</div></div></div>
+<div id="intro"><div class="card"><h1>Sand</h1><h2>Hyper-realistic sand simulator</h2><p>Built with WebGL2 and JavaScript. Push grains with your finger, tilt your phone to make them slide, or shake to scatter them. Play in your browser on phones, tablets and desktops.</p><div id="picker"><div class="row" id="introSands"></div><div class="row" id="introScreens"></div></div><span class="cta">Pour</span><div class="hint">Lay it flat · Tilt · Shake · Draw</div></div></div>
 <div id="empty"><button class="btn" id="emptyPour">Pour more sand</button></div>
 <button id="menuBtn" aria-label="Menu"><i><svg viewBox="0 0 24 24" fill="#fff"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></i></button>
 <div id="menu">
@@ -100,9 +108,10 @@
   <div class="row"><button class="btn primary" id="pour">Pour fresh sand</button><button class="btn" id="sound">Sound on</button><button class="btn" id="haptics">Haptics on</button></div>
 </div>
 <div id="toast"></div>
+<script type="module" src="src/app.js"></script>
 <script type="module" src="src/main.js"></script>
 <script>
-  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+  if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.Capacitor) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
 </html>

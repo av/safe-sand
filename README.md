@@ -2,7 +2,7 @@
 
 Real-feeling sand on your phone screen. Tilt the phone and it slides, jerk it and it lags behind, drag a finger and it plows a channel, flip the phone face-down and it falls off.
 
-Open it on a phone: **https://av.github.io/safe-sand/**. For true fullscreen, use Share → Add to Home Screen (iOS) or Install app (Android). On iOS, tap "Pour" and allow motion access. Rotating the phone does not move the sand: the picture stays fixed to the glass, the way real sand would. The silent switch mutes the sound on iPhone, and the sound mixes with any music already playing.
+Open it on a phone: **https://av.github.io/safe-sand/**. For true fullscreen, use Share → Add to Home Screen (iOS) or Install app (Android). Before the first pour, pick the sand type and what lies under it on the start card. On iOS, tap "Pour" and allow motion access. Rotating the phone does not move the sand: the picture stays fixed to the glass, the way real sand would. The silent switch mutes the sound on iPhone, and the sound mixes with any music already playing.
 
 ## How it works
 
@@ -25,3 +25,22 @@ python3 -m http.server 8000
 Desktop controls: drag with the mouse to push sand, use the arrow keys or WASD to tilt, and hold Space to shake.
 
 Query parameters: `sand=river|beach|desert|volcanic|coral`, `screen=light|lock|dark`, `n=<grain cap>`, `density=<grains per mm²>`, `ppi=<css px per inch>`, `seed=<n>`, `flip` (invert the accelerometer sign if tilting moves sand the wrong way on some device), `test` (manual stepping via `window.sand`).
+
+## Android app
+
+The same code ships as an Android app (`io.github.av.sand`) through [Capacitor](https://capacitorjs.com). The app adds what the website does not have: AdMob ads (a banner on the start screen and in the menu, never over the sand while playing), Google's consent form in the EEA, and Sand Pro, a one-time purchase (`sand_pro`) that removes ads and unlocks Desert, Volcanic and Coral. Without Pro, a rewarded video unlocks them for 24 hours. All of it lives in `src/app.js`, which does nothing on the web.
+
+Build locally (JDK 21 and the Android SDK):
+
+```sh
+npm ci
+npm test
+npm run sync
+cd android && ./gradlew assembleDebug
+```
+
+Release: push a tag `vX.Y.Z`. CI builds a signed bundle (version code `X*10000 + Y*100 + Z`) and uploads it to the internal track when the `PLAY_SERVICE_ACCOUNT_JSON` secret is set. Signing needs the `ANDROID_KEYSTORE_B64` and `ANDROID_KEYSTORE_PASSWORD` secrets (key alias `upload`). Store listing text, console answers and images are in `store/`.
+
+Ad IDs: the AdMob app ID is `admobAppId` in `android/gradle.properties`, the ad unit IDs are `UNITS` in `src/app.js`. Google's test IDs serve test ads only, and the production upload refuses them.
+
+See [the release checklist](store/release-checklist.md) for the remaining account, advertising and purchase setup before submitting to Google Play. Android builds require OpenGL ES 3.0 for the WebGL2 simulator.
