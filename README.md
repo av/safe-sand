@@ -34,6 +34,7 @@ Build locally (JDK 21 and the Android SDK):
 
 ```sh
 npm ci
+npm test
 npm run sync
 cd android && ./gradlew assembleDebug
 ```
@@ -41,3 +42,5 @@ cd android && ./gradlew assembleDebug
 Release: push a tag `vX.Y.Z`. CI builds a signed bundle (version code `X*10000 + Y*100 + Z`) and uploads it to the internal track when the `PLAY_SERVICE_ACCOUNT_JSON` secret is set. Signing needs the `ANDROID_KEYSTORE_B64` and `ANDROID_KEYSTORE_PASSWORD` secrets (key alias `upload`). Store listing text, console answers and images are in `store/`.
 
 Ad IDs: the AdMob app ID is `admobAppId` in `android/gradle.properties`, the ad unit IDs are `UNITS` in `src/app.js`. Google's test IDs serve test ads only, and the production upload refuses them.
+
+See [the release checklist](store/release-checklist.md) for the remaining account, advertising and purchase setup before submitting to Google Play. Android builds require OpenGL ES 3.0 for the WebGL2 simulator.

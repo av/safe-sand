@@ -25,6 +25,7 @@ const state = {
   banner: 'none',
   pending: null,
 };
+let adsInitialized = false;
 
 const unlocked = () => state.pro || Date.now() < state.passUntil;
 const locked = (k) => !FREE.includes(k) && !unlocked();
@@ -40,6 +41,10 @@ const css = `
   #pro .row { margin: 0; }
   #pro .btn { flex: 1 1 100%; }
   #pro .btn[hidden] { display: none; }
+  #policyDialog { width: min(680px, calc(100vw - 32px)); height: min(720px, calc(100dvh - 32px)); padding: 0; border: 0; border-radius: 18px; background: #f6f2ea; }
+  #policyDialog::backdrop { background: rgba(0,0,0,.6); }
+  #policyDialog button { display: block; margin: 12px 12px 0 auto; color: #24211e; background: #e7e0d5; }
+  #policyDialog iframe { width: 100%; height: calc(100% - 60px); border: 0; }
 `;
 
 function mount() {
@@ -57,37 +62,58 @@ function mount() {
   privacy.textContent = 'Privacy choices';
   privacy.hidden = true;
   $('pour').parentElement.appendChild(privacy);
+  const policy = document.createElement('button');
+  policy.className = 'btn';
+  policy.textContent = 'Privacy policy';
+  $('pour').parentElement.appendChild(policy);
+  const policyDialog = document.createElement('dialog');
+  policyDialog.id = 'policyDialog';
+  policyDialog.setAttribute('aria-label', 'Privacy policy');
+  policyDialog.innerHTML = '<button class="btn" type="button">Close</button><iframe title="Privacy policy" src="privacy.html"></iframe>';
+  document.body.appendChild(policyDialog);
+  policy.onclick = () => policyDialog.showModal();
+  policyDialog.querySelector('button').onclick = () => policyDialog.close();
 
-  $('sands').addEventListener('click', (e) => {
-    const b = e.target.closest('.swatch');
-    if (!b || !locked(b.dataset.sand)) return;
-    e.stopPropagation();
-    state.pending = b.dataset.sand;
-    offer(true);
-  }, true);
+  for (const id of ['sands', 'introSands']) {
+    $(id).addEventListener('click', (e) => {
+      const b = e.target.closest('.swatch');
+      if (!b || !locked(b.dataset.sand)) return;
+      e.stopPropagation();
+      state.pending = b.dataset.sand;
+      $('menu').classList.add('open');
+      offer(true);
+    }, true);
+  }
   $('buyPro').onclick = buy;
   $('watchAd').onclick = watch;
-  privacy.onclick = () => P.AdMob.showPrivacyOptionsForm().catch(() => {});
+  privacy.onclick = async () => {
+    try { await P.AdMob.showPrivacyOptionsForm(); await ads(); } catch {}
+  };
 
   new MutationObserver(() => { if (!$('menu').classList.contains('open')) offer(false); syncBanner(); })
     .observe($('menu'), { attributes: true, attributeFilter: ['class'] });
   new MutationObserver(syncBanner).observe($('intro'), { attributes: true, attributeFilter: ['class'] });
 
   P.App?.addListener('backButton', () => {
-    if ($('menu').classList.contains('open')) $('menu').classList.remove('open');
+    if (policyDialog.open) policyDialog.close();
+    else if ($('menu').classList.contains('open')) $('menu').classList.remove('open');
     else P.App.minimizeApp();
   });
-  P.App?.addListener('resume', () => { if (!unlocked()) render(); });
+  P.App?.addListener('resume', () => {
+    billing().catch(() => {}).finally(() => ads().catch(() => {}));
+  });
   render();
 }
 
 function render() {
-  for (const b of $('sands').children) b.classList.toggle('locked', locked(b.dataset.sand));
+  for (const id of ['sands', 'introSands']) {
+    for (const b of $(id).children) b.classList.toggle('locked', locked(b.dataset.sand));
+  }
   const buy = $('buyPro'), watch = $('watchAd');
   buy.hidden = !state.product || state.pro;
   if (state.product) buy.textContent = `Get Sand Pro · ${state.product.priceString} · no ads`;
   watch.hidden = !state.ads || state.pro;
-  $('privacy').hidden = !state.privacy || state.pro;
+  $('privacy').hidden = !state.privacy;
   if (unlocked()) offer(false);
 }
 
@@ -143,16 +169,26 @@ async function watch() {
   btn.disabled = true;
   btn.textContent = 'Loading ad…';
   let rewarded = false;
-  const handle = await P.AdMob.addListener('onRewardedVideoAdReward', () => { rewarded = true; });
+  let failed = false;
+  const handles = [];
+  let close;
+  const closed = new Promise((resolve) => { close = resolve; });
   try {
+    handles.push(await P.AdMob.addListener('onRewardedVideoAdReward', () => { rewarded = true; }));
+    handles.push(await P.AdMob.addListener('onRewardedVideoAdDismissed', close));
+    handles.push(await P.AdMob.addListener('onRewardedVideoAdFailedToShow', () => { failed = true; close(); }));
     await P.AdMob.prepareRewardVideoAd({ adId: UNITS.rewarded, isTesting: TEST_ADS, immersiveMode: true });
-    await P.AdMob.showRewardVideoAd();
+    // Android resolves this call only when a reward is earned, not on an early dismissal.
+    P.AdMob.showRewardVideoAd().catch(() => { failed = true; close(); });
+    await closed;
+    if (failed) throw new Error('Rewarded ad could not be shown');
   } catch {
     toast('No ad is available right now. Try again in a minute.');
+  } finally {
+    await Promise.all(handles.map((handle) => handle.remove()));
+    btn.disabled = false;
+    btn.textContent = label;
   }
-  handle.remove();
-  btn.disabled = false;
-  btn.textContent = label;
   if (rewarded) {
     state.passUntil = Date.now() + PASS_MS;
     store.set('passUntil', state.passUntil);
@@ -190,17 +226,25 @@ async function billing() {
 
 async function ads() {
   const A = P.AdMob;
-  if (!A || state.pro) return;
-  let info = null;
+  if (!A) return;
+  let info;
   try {
     info = await A.requestConsentInfo(TEST_ADS ? { debugGeography: 1 } : {});
-    if (info.status === 'REQUIRED' && info.isConsentFormAvailable) info = await A.showConsentForm();
-  } catch {}
-  await A.initialize({ initializeForTesting: TEST_ADS, maxAdContentRating: 'General', tagForChildDirectedTreatment: false });
-  state.ads = info ? info.canRequestAds : true;
+    if (!state.pro && info.status === 'REQUIRED' && info.isConsentFormAvailable) info = await A.showConsentForm();
+  } catch {
+    state.ads = false;
+    render();
+    await syncBanner();
+    return;
+  }
+  state.ads = info.canRequestAds === true && !state.pro;
   state.privacy = info?.privacyOptionsRequirementStatus === 'REQUIRED';
+  if (state.ads && !adsInitialized) {
+    await A.initialize({ initializeForTesting: TEST_ADS, maxAdContentRating: 'General', tagForChildDirectedTreatment: false });
+    adsInitialized = true;
+  }
   render();
-  syncBanner();
+  await syncBanner();
 }
 
 if (native) {
