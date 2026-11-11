@@ -37,6 +37,7 @@ const standalone = navigator.standalone || matchMedia('(display-mode: fullscreen
 let gl, sim, renderer, input, audio;
 let presetKey = PRESETS[params.get('sand')] ? params.get('sand') : (PRESETS[store.get('preset')] ? store.get('preset') : 'river');
 let screenKey = SCREENS[params.get('screen')] ? params.get('screen') : (SCREENS[store.get('screen')] ? store.get('screen') : 'light');
+let qtyPct = Math.max(5, Math.round(Number(store.get('qtyPct')) || 100));
 let soundOn = store.get('sound', true) !== false;
 let hapticsOn = store.get('haptics', true) !== false;
 let dpr = 1;
@@ -144,8 +145,12 @@ function worldSize() { return [view.w * mmPerPx, view.h * mmPerPx]; }
 
 function resetWorld(intro, amount = 1) {
   const [W, H] = worldSize();
-  if (!sim.world || Math.abs(sim.world[0] - W) > 0.01 || Math.abs(sim.world[1] - H) > 0.01 || !sim.count) {
-    replacing(sim, () => sim.resize(W, H, particleBudget(W * H)));
+  const budget = particleBudget(W * H);
+  const target = Math.round(budget * qtyPct / 100);
+  const TH = Math.max(1, Math.ceil(target / TW));
+  const allocated = TW * TH;
+  if (!sim.world || Math.abs(sim.world[0] - W) > 0.01 || Math.abs(sim.world[1] - H) > 0.01 || !sim.count || allocated !== sim.count) {
+    replacing(sim, () => sim.resize(W, H, target));
   }
   sim.setPreset(PRESETS[presetKey]);
   sim.pour({ seed: seed++, intro, amount });
@@ -463,6 +468,40 @@ function buildMenu() {
     };
     screens.appendChild(b);
   }
+  const amount = $('amount');
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;align-items:center;gap:8px;';
+  const dec = document.createElement('button');
+  dec.type = 'button';
+  dec.textContent = '−';
+  dec.style.cssText = 'border:0;border-radius:50%;width:32px;height:32px;background:rgba(255,255,255,.09);color:#fff;font:inherit;font-size:16px;line-height:1;cursor:pointer;display:grid;place-items:center;';
+  const val = document.createElement('span');
+  val.textContent = `${qtyPct}%`;
+  val.style.cssText = 'font-size:13.5px;color:#fff;min-width:44px;text-align:center;line-height:1;';
+  const inc = document.createElement('button');
+  inc.type = 'button';
+  inc.textContent = '+';
+  inc.style.cssText = 'border:0;border-radius:50%;width:32px;height:32px;background:rgba(255,255,255,.09);color:#fff;font:inherit;font-size:16px;line-height:1;cursor:pointer;display:grid;place-items:center;';
+  let qtyTimer = null;
+  const commitQty = () => {
+    if (qtyTimer) clearTimeout(qtyTimer);
+    qtyTimer = setTimeout(() => {
+      qtyTimer = null;
+      resetWorld(true);
+      closeMenu();
+    }, 800);
+  };
+  const apply = () => {
+    val.textContent = `${qtyPct}%`;
+    store.set('qtyPct', qtyPct);
+    commitQty();
+  };
+  dec.onclick = () => { qtyPct = Math.max(5, qtyPct - 5); apply(); };
+  inc.onclick = () => { qtyPct = qtyPct + 5; apply(); };
+  wrap.appendChild(dec);
+  wrap.appendChild(val);
+  wrap.appendChild(inc);
+  amount.appendChild(wrap);
   const snd = $('sound');
   const syncSound = () => { snd.textContent = soundOn ? 'Sound on' : 'Sound off'; snd.classList.toggle('on', soundOn); };
   syncSound();
